@@ -1,0 +1,24 @@
+package database
+
+import (
+	"fmt"
+	"landtick/models"
+	"landtick/pkg/mysql"
+)
+
+func RunMigration() {
+	err := mysql.DB.AutoMigrate(
+		&models.User{},
+		&models.Transaksi{},
+		&models.Train{},
+		&models.Tiket{},
+	)
+
+	if err != nil {
+		fmt.Println(err)
+		panic("Migration Failed!")
+	}
+
+	fmt.Println("Migration Success !")
+
+}
