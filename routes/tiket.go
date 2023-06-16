@@ -2,6 +2,7 @@ package routes
 
 import (
 	"landtick/handlers"
+	"landtick/pkg/middleware"
 	"landtick/pkg/mysql"
 	"landtick/repository"
 
@@ -12,7 +13,7 @@ func TiketRoutes(e *echo.Group) {
 	tiketRepository := repository.RepositoryTiket(mysql.DB)
 	h := handlers.HandlersTiket(tiketRepository)
 
-	e.POST("/tiket", h.CreateTiket)
+	e.POST("/tiket", middleware.Auth(h.CreateTiket))
 	e.GET("/tiket", h.FindTiket)
 	e.GET("/tiket/:id", h.GetTiket)
 }

@@ -5,8 +5,8 @@ import "time"
 type Tiket struct {
 	ID           int           `json:"id" gorm:"primary_key:auto_increment"`
 	Name         string        `json:"name" form:"name" gorm:"type: varchar(255)"`
-	TrainID      int           `json:"train_id" gorm:"constrain:OnUpdate:CASCADE,OnDelete:CASCADE"`
-	Train        TrainResponse `json:"train" gorm:"constrain:OnUpdate:CASCADE,OnDelete:CASCADE"`
+	TrainID      int           `json:"train_id" `
+	Train        TrainResponse `json:"train" gorm:"foreighnKey:TrainID"`
 	JamBerangkat string        `json:"jam_berangkat" form:"jam_berangkat" gorm:"type: varchar(255)"`
 	JamTiba      string        `json:"jam_tiba" form:"jam_tiba" gorm:"type: varchar(255)"`
 	Durasi       string        `json:"durasi" form:"durasi" gorm:"type: varchar(255)"`
@@ -22,7 +22,7 @@ type Tiket struct {
 type TiketRespon struct {
 	ID           int           `json:"id"`
 	Name         string        `json:"name" `
-	TrainID      int           `json:"train_id" gorm:"constrain:OnUpdate:CASCADE,OnDelete:CASCADE"`
+	TrainID      int           `json:"train_id"`
 	Train        TrainResponse `json:"train" gorm:"foreignkey:TrainID"`
 	JamBerangkat string        `json:"jam_berangkat"`
 	JamTiba      string        `json:"jam_tiba"`

@@ -1,6 +1,7 @@
 package authdto
 
 type AuthRespon struct {
+	ID       int    `json:"id"`
 	Fullname string `json:"fullname"`
 	Username string `json:"username"`
 	Email    string `json:"email"`
@@ -12,6 +13,7 @@ type AuthRespon struct {
 }
 
 type LoginRespon struct {
+	ID       int    `json:"id"`
 	Fullname string `json:"fullname"`
 	Username string `json:"username"`
 	Email    string `json:"email"`
@@ -20,4 +22,5 @@ type LoginRespon struct {
 	Phone    string `json:"phone"`
 	Address  string `json:"address"`
 	Role     string `json:"role"`
+	Token    string `json:"token"`
 }

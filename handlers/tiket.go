@@ -43,14 +43,14 @@ func (h *tiketHandlers) GetTiket(c echo.Context) error {
 
 func (h *tiketHandlers) CreateTiket(c echo.Context) error {
 	request := new(tiketdto.TiketRequest)
-	if err := c.Bind(&request); err != nil {
+	if err := c.Bind(request); err != nil {
 		return c.JSON(http.StatusBadRequest, dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()})
 	}
 
 	validation := validator.New()
 	err := validation.Struct(request)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, dto.ErrorResult{Code: http.StatusBadRequest, Message: "Validator error"})
 	}
 
 	tiket := models.Tiket{
