@@ -34,6 +34,18 @@ func (h *transaksiHandlers) FindTransaksi(c echo.Context) error {
 	return c.JSON(http.StatusOK, dto.SuccessResult{Code: http.StatusOK, Data: transaksi})
 }
 
+func (h *transaksiHandlers) FindTransaksiByUserId(c echo.Context) error {
+	id, _ := strconv.Atoi(c.Param("id"))
+
+	transasksi, err := h.TransaksiRepository.GetTransaksiByUserId(id)
+
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()})
+	}
+
+	return c.JSON(http.StatusOK, dto.SuccessResult{Code: http.StatusOK, Data: transasksi})
+}
+
 func (h *transaksiHandlers) GetTransaksi(c echo.Context) error {
 	id, _ := strconv.Atoi(c.Param("id"))
 	transaksi, err := h.TransaksiRepository.GetTransaksi(id)

@@ -42,9 +42,26 @@ func (h *tiketHandlers) GetTiket(c echo.Context) error {
 }
 
 func (h *tiketHandlers) CreateTiket(c echo.Context) error {
-	request := new(tiketdto.TiketRequest)
-	if err := c.Bind(request); err != nil {
-		return c.JSON(http.StatusBadRequest, dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()})
+	// request := new(tiketdto.TiketRequest)
+	// if err := c.Bind(request); err != nil {
+	// 	return c.JSON(http.StatusBadRequest, dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()})
+	// }
+
+	train_id, _ := strconv.Atoi(c.FormValue("train_id"))
+	harga, _ := strconv.Atoi(c.FormValue("harga"))
+	kuota, _ := strconv.Atoi(c.FormValue("kuota"))
+
+	request := tiketdto.TiketRequest{
+		Name:         c.FormValue("name"),
+		JamBerangkat: c.FormValue("jam_berangkat"),
+		JamTiba:      c.FormValue("jam_tiba"),
+		StasiunAwal:  c.FormValue("stasiun_awal"),
+		StasiunAkhir: c.FormValue("stasiun_akhir"),
+		Durasi:       c.FormValue("durasi"),
+		Tanggal:      c.FormValue("tanggal"),
+		TrainID:      train_id,
+		Harga:        harga,
+		Kuota:        kuota,
 	}
 
 	validation := validator.New()
@@ -53,10 +70,15 @@ func (h *tiketHandlers) CreateTiket(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, dto.ErrorResult{Code: http.StatusBadRequest, Message: "Validator error"})
 	}
 
+	// userLogin := c.Get("userLogin")
+	// userId := userLogin.(jwt.MapClaims)["id"].(float64)
+
+	idTrain, _ := h.TiketRepository.GetTiketByID(request.TrainID)
+
 	tiket := models.Tiket{
 		Name:         request.Name,
 		TrainID:      request.TrainID,
-		Train:        models.TrainResponse{},
+		Train:        idTrain,
 		JamBerangkat: request.JamBerangkat,
 		JamTiba:      request.JamTiba,
 		Durasi:       request.Durasi,
@@ -68,6 +90,9 @@ func (h *tiketHandlers) CreateTiket(c echo.Context) error {
 	}
 
 	data, err := h.TiketRepository.CreateTiket(tiket)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, dto.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()})
+	}
 	return c.JSON(http.StatusOK, dto.SuccessResult{Code: http.StatusOK, Data: convertResponseTiket(data)})
 }
 

@@ -7,7 +7,7 @@ type TiketRequest struct {
 	JamBerangkat string `json:"jam_berangkat"`
 	JamTiba      string `json:"jam_tiba"`
 	StasiunAwal  string `json:"stasiun_awal"`
-	StasiunAkhir string `json:"stasiun_Akhir"`
+	StasiunAkhir string `json:"stasiun_akhir"`
 	Durasi       string `json:"durasi"`
 	Harga        int    `json:"harga"`
 	Tanggal      string `json:"tanggal"`

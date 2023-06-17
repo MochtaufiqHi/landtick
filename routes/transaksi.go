@@ -14,5 +14,6 @@ func TransaksiRoutes(e *echo.Group) {
 
 	e.POST("/transaksi", h.CreateTransaksi)
 	e.GET("/transaksi", h.FindTransaksi)
+	e.GET("/transaksi-user/:id", h.FindTransaksiByUserId)
 	e.GET("/transaksi/:id", h.GetTransaksi)
 }

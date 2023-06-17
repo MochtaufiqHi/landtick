@@ -11,6 +11,7 @@ type TransaksiRepository interface {
 	FindTransaksi() ([]models.Transaksi, error)
 	GetTransaksi(ID int) (models.Transaksi, error)
 	UpdateTransaksi(status string, orderId int) (models.Transaksi, error)
+	GetTransaksiByUserId(ID int) ([]models.Transaksi, error)
 }
 
 func RepositoryTransaksi(db *gorm.DB) *repository {
@@ -35,6 +36,13 @@ func (r *repository) GetTransaksi(ID int) (models.Transaksi, error) {
 	var transaksi models.Transaksi
 
 	err := r.db.Preload("User").Preload("Tiket.Train").First(&transaksi, ID).Error
+
+	return transaksi, err
+}
+
+func (r *repository) GetTransaksiByUserId(ID int) ([]models.Transaksi, error) {
+	var transaksi []models.Transaksi
+	err := r.db.Where("user_id =?", ID).Preload("User").Preload("Tiket.Train").Find(&transaksi).Error
 
 	return transaksi, err
 }
