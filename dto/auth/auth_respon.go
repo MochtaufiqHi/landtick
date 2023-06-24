@@ -10,6 +10,7 @@ type AuthRespon struct {
 	Phone    string `json:"phone"`
 	Address  string `json:"address"`
 	Role     string `json:"role"`
+	Token    string `json:"token"`
 }
 
 type LoginRespon struct {

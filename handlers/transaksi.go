@@ -10,9 +10,13 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/labstack/echo/v4"
+	"github.com/midtrans/midtrans-go"
+	"github.com/midtrans/midtrans-go/snap"
 	"gopkg.in/gomail.v2"
 )
 
@@ -63,8 +67,12 @@ func (h *transaksiHandlers) CreateTransaksi(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()})
 	}
 
-	// userLogin := c.Get("userLogin")
-	// userId := userLogin.(jwt.MapClaims)["id"].(float64)
+	userLogin := c.Get("userLogin")
+	userId := userLogin.(jwt.MapClaims)["id"].(float64)
+
+	// userId := 3
+	request.UserID = int(userId)
+	request.Status = "pending"
 
 	validation := validator.New()
 	err := validation.Struct(request)
@@ -72,19 +80,58 @@ func (h *transaksiHandlers) CreateTransaksi(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()})
 	}
 
+	var transactionIsMatch = false
+	var transactionId int
+	for !transactionIsMatch {
+		transactionId = int(time.Now().Unix())
+		transactionData, _ := h.TransaksiRepository.GetTransaksi(transactionId)
+		if transactionData.ID == 0 {
+			transactionIsMatch = true
+		}
+	}
+
 	transaksi := models.Transaksi{
+		ID:         transactionId,
 		Qty:        request.Qty,
 		Total:      request.Total,
 		Status:     request.Status,
 		Attachment: request.Attachment,
-		UserID:     request.UserID,
+		UserID:     int(userId),
 		User:       models.UserRespon{},
 		TiketID:    request.TiketID,
 		Tiket:      models.TiketRespon{},
 	}
 
-	data, err := h.TransaksiRepository.CreateTransaksi(transaksi)
-	return c.JSON(http.StatusOK, dto.SuccessResult{Code: http.StatusOK, Data: convertResponseTransaksi(data)})
+	dataTransactions, err := h.TransaksiRepository.CreateTransaksi(transaksi)
+	// return c.JSON(http.StatusOK, dto.SuccessResult{Code: http.StatusOK, Data: convertResponseTransaksi(data)})
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, dto.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()})
+	}
+
+	// 1. Initiate Snap client
+	var s = snap.Client{}
+	s.New(os.Getenv("SERVER_KEY"), midtrans.Sandbox)
+	// Use to midtrans.Production if you want Production Environment (accept real transaction).
+
+	// 2. Initiate Snap request param
+	req := &snap.Request{
+		TransactionDetails: midtrans.TransactionDetails{
+			OrderID:  strconv.Itoa(dataTransactions.ID),
+			GrossAmt: int64(dataTransactions.Total),
+		},
+		CreditCard: &snap.CreditCardDetails{
+			Secure: true,
+		},
+		CustomerDetail: &midtrans.CustomerDetails{
+			FName: dataTransactions.User.Fullname,
+			Email: dataTransactions.User.Email,
+		},
+	}
+
+	// 3. Execute request create Snap transaction to Midtrans Snap API
+	snapResp, _ := s.CreateTransaction(req)
+
+	return c.JSON(http.StatusOK, dto.SuccessResult{Code: http.StatusOK, Data: snapResp})
 }
 
 func (h *transaksiHandlers) Notification(c echo.Context) error {
@@ -98,35 +145,36 @@ func (h *transaksiHandlers) Notification(c echo.Context) error {
 	fraudStatus := notificationPayload["fraud_status"].(string)
 	orderId := notificationPayload["order_id"].(string)
 
-	order_id, _ := strconv.Atoi(orderId)
+	ID, _ := strconv.Atoi(orderId)
 
 	fmt.Print("ini Payload nya", notificationPayload)
 
-	transaction, _ := h.TransaksiRepository.GetTransaksi(order_id)
+	transaction, _ := h.TransaksiRepository.GetTransaksi(ID)
 
 	if transactionStatus == "capture" {
 		if fraudStatus == "challenge" {
 			// TODO set transaction status on your database to 'challenge'
 			// e.g: 'Payment status challenged. Please take action on your Merchant Administration Portal
-			h.TransaksiRepository.UpdateTransaksi("pending", order_id)
+			h.TransaksiRepository.UpdateTransaksi("pending", ID)
 		} else if fraudStatus == "accept" {
 			// TODO set transaction status on your database to 'success'
 			SendMail("success", transaction)
-			h.TransaksiRepository.UpdateTransaksi("success", order_id)
+			h.TransaksiRepository.UpdateTransaksi("success", ID)
 		}
 	} else if transactionStatus == "settlement" {
 		// TODO set transaction status on your databaase to 'success'
-		h.TransaksiRepository.UpdateTransaksi("success", order_id)
+		h.TransaksiRepository.UpdateTransaksi("success", ID)
 	} else if transactionStatus == "deny" {
 		// TODO you can ignore 'deny', because most of the time it allows payment retries
 		// and later can become success
-		h.TransaksiRepository.UpdateTransaksi("failed", order_id)
+		h.TransaksiRepository.UpdateTransaksi("failed", ID)
 	} else if transactionStatus == "cancel" || transactionStatus == "expire" {
 		// TODO set transaction status on your databaase to 'failure'
-		h.TransaksiRepository.UpdateTransaksi("failed", order_id)
+		h.TransaksiRepository.UpdateTransaksi("failed", ID)
 	} else if transactionStatus == "pending" {
+		// SendMail("success", transaction)
 		// TODO set transaction status on your databaase to 'pending' / waiting payment
-		h.TransaksiRepository.UpdateTransaksi("pending", order_id)
+		h.TransaksiRepository.UpdateTransaksi("pending", ID)
 	}
 
 	return c.JSON(http.StatusOK, dto.SuccessResult{Code: http.StatusOK, Data: notificationPayload})

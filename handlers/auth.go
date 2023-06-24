@@ -101,8 +101,8 @@ func (h *handlersAuth) Login(c echo.Context) error {
 
 	// generate token
 	claims := jwt.MapClaims{}
-	claims["id"] = user.ID
-	claims["role"] = user.Role
+	claims["id"] = dataUser.ID
+	claims["role"] = dataUser.Role
 	claims["exp"] = time.Now().Add(time.Hour * 2).Unix()
 
 	token, errGenerateToken := jwtToken.GenerateToken(&claims)

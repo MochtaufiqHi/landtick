@@ -2,6 +2,8 @@ package main
 
 import (
 	"landtick/database"
+	"os"
+
 	// "landtick/pkg/middleware"
 	"landtick/pkg/mysql"
 	"landtick/routes"
@@ -27,5 +29,7 @@ func main() {
 
 	routes.RouteInit(e.Group("/api/v1"))
 
-	e.Logger.Fatal(e.Start(":1323"))
+	PORT := os.Getenv("PORT")
+
+	e.Logger.Fatal(e.Start(":" + PORT))
 }

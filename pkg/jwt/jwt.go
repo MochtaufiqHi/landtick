@@ -1,9 +1,11 @@
 package jwtToken
 
 import (
+	// "github.com/golang-jwt/jwt"
 	"fmt"
 	"os"
 
+	// "github.com/golang-jwt/jwt/v4"
 	"github.com/golang-jwt/jwt/v4"
 )
 
@@ -43,5 +45,6 @@ func DecodeToken(tokenString string) (jwt.MapClaims, error) {
 	if isOk && token.Valid {
 		return claims, nil
 	}
+
 	return nil, fmt.Errorf("Invalid Token")
 }
